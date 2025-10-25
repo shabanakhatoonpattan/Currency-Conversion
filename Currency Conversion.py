@@ -8,12 +8,12 @@ st.title("💱 Realtime Currency Converter")
 # ---- Function to get supported currencies ----
 @st.cache_data
 def get_supported_currencies():
-    url = "https://api.exchangerate.host/latest"
+    url = "https://api.frankfurter.app/currencies"
     try:
         response = requests.get(url, timeout=10)
         data = response.json()
-        if data.get("rates"):
-            return list(data["rates"].keys())
+        if data:
+            return list(data.keys())
         else:
             st.warning("⚠️ Unable to fetch currency list, using fallback set.")
             return ["USD", "EUR", "GBP", "INR", "JPY", "AUD", "CAD"]
@@ -23,12 +23,12 @@ def get_supported_currencies():
 
 # ---- Function to get exchange rate ----
 def convert_currency(amount, from_currency, to_currency):
-    url = f"https://api.exchangerate.host/convert?from={from_currency}&to={to_currency}&amount={amount}"
+    url = f"https://api.frankfurter.app/latest?amount={amount}&from={from_currency}&to={to_currency}"
     try:
         response = requests.get(url, timeout=10)
         data = response.json()
-        if data.get("result") is not None:
-            return data["result"]
+        if "rates" in data and to_currency in data["rates"]:
+            return data["rates"][to_currency]
         else:
             st.error("API error: Rates not found in response.")
             return None
