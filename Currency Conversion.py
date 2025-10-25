@@ -1,63 +1,46 @@
 import streamlit as st
 import requests
 
-# -------------------------------
-# Title and setup
-# -------------------------------
 st.set_page_config(page_title="💱 Real-Time Currency Converter", layout="centered")
 st.title("💱 Real-Time Currency Converter")
 
-st.markdown("""
-This simple app converts one currency to another using live exchange rates.
-Data source: [exchangerate.host](https://exchangerate.host/)
-""")
+# List of valid currency codes
+CURRENCIES = ["USD", "EUR", "GBP", "INR", "JPY", "AUD", "CAD", "SGD", "CHF", "CNY"]
 
-# -------------------------------
-# Function to fetch exchange rates
-# -------------------------------
 @st.cache_data(ttl=600)
 def get_exchange_rates(base_currency="USD"):
     """Fetch live exchange rates for a given base currency."""
     url = f"https://api.exchangerate.host/latest?base={base_currency}"
-    response = requests.get(url)
-    if response.status_code != 200:
-        st.error("Failed to fetch exchange rates. Please try again later.")
+    try:
+        response = requests.get(url, timeout=10)
+        response.raise_for_status()
+        data = response.json()
+        if "rates" not in data:
+            raise ValueError("Rates not found in response.")
+        return data
+    except Exception as e:
+        st.error(f"API error: {e}")
         return None
-    return response.json()
 
-# -------------------------------
-# User Inputs
-# -------------------------------
-st.header("Enter Details:")
-
+# --- UI inputs
 col1, col2, col3 = st.columns(3)
 with col1:
-    from_currency = st.text_input("From Currency (e.g. USD, INR, EUR):", value="USD").upper()
+    from_currency = st.selectbox("From Currency", CURRENCIES, index=0)
 with col2:
-    to_currency = st.text_input("To Currency (e.g. INR, EUR, GBP):", value="INR").upper()
+    to_currency = st.selectbox("To Currency", CURRENCIES, index=3)
 with col3:
     amount = st.number_input("Amount to Convert:", min_value=0.0, value=1.0, step=0.1, format="%.2f")
 
-# -------------------------------
-# Conversion Logic
-# -------------------------------
 if st.button("Convert"):
-    with st.spinner("Fetching live rates..."):
-        data = get_exchange_rates(from_currency)
-        if data and "rates" in data:
-            rates = data["rates"]
-            if to_currency in rates:
-                rate = rates[to_currency]
-                converted_amount = amount * rate
-                st.success(f"✅ {amount:.2f} {from_currency} = {converted_amount:.2f} {to_currency}")
-                st.caption(f"Exchange rate: 1 {from_currency} = {rate:.4f} {to_currency}")
-            else:
-                st.error(f"Currency '{to_currency}' not found in rates data.")
+    data = get_exchange_rates(from_currency)
+    if not data:
+        st.error("Unable to fetch exchange rates. Please try again later.")
+    else:
+        rates = data["rates"]
+        if to_currency in rates:
+            rate = rates[to_currency]
+            converted = amount * rate
+            st.success(f"{amount:.2f} {from_currency} = {converted:.2f} {to_currency}")
+            st.caption(f"Rate: 1 {from_currency} = {rate:.4f} {to_currency}")
         else:
-            st.error("Unable to fetch exchange rates. Please check the currency code.")
-
-# -------------------------------
-# Footer
-# -------------------------------
-st.markdown("---")
-st.markdown("💡 *Built with Streamlit and exchangerate.host — by Shabana*")
+            st.error(f"Currency '{to_currency}' not available in API response.")
