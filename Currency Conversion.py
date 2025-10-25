@@ -8,18 +8,17 @@ st.title("💱 Realtime Currency Converter")
 # ---- Function to get supported currencies ----
 @st.cache_data
 def get_supported_currencies():
-    url = "https://api.exchangerate.host/symbols"
+    url = "https://api.exchangerate.host/latest"
     try:
         response = requests.get(url, timeout=10)
         data = response.json()
-        # Verify structure before accessing
-        if data.get("symbols"):
-            return list(data["symbols"].keys())
+        if data.get("rates"):
+            return list(data["rates"].keys())
         else:
             st.warning("⚠️ Unable to fetch currency list, using fallback set.")
             return ["USD", "EUR", "GBP", "INR", "JPY", "AUD", "CAD"]
     except Exception as e:
-        st.error(f"Error fetching currency symbols: {e}")
+        st.error(f"Error fetching currency list: {e}")
         return ["USD", "EUR", "GBP", "INR", "JPY", "AUD", "CAD"]
 
 # ---- Function to get exchange rate ----
@@ -32,13 +31,12 @@ def convert_currency(amount, from_currency, to_currency):
             return data["result"]
         else:
             st.error("API error: Rates not found in response.")
-            st.json(data)  # optional: display debug data
             return None
     except Exception as e:
         st.error(f"API request failed: {e}")
         return None
 
-# ---- UI Components ----
+# ---- UI ----
 currencies = get_supported_currencies()
 
 col1, col2 = st.columns(2)
