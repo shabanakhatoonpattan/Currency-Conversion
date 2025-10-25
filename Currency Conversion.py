@@ -6,7 +6,7 @@ from sklearn.linear_model import LinearRegression
 import numpy as np
 
 st.set_page_config(page_title="AI-Powered Currency Converter", page_icon="💱")
-st.title("💹 Predictive Currency Converter (AI/ML)")
+st.title("💹 Predictive Currency Converter (AI/ML) by Shabana Pattan")
 
 # ---- Fetch supported currencies ----
 @st.cache_data
